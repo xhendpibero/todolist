@@ -1,205 +1,149 @@
 import React from 'react';
-import './App.css';
-import TambahList from './component/TambahList';
+import {delay} from "redux-saga";
 import Load from './load.gif';
+import './App.css';
 
-class App extends React.Component{
-    constructor(props){
-      super(props);
-      this.state = {
-        todo: [{
-                val: "Apa Tugasmu Hari Ini? (click here)",
-                selected: false,
-              }],
-        list: 1,
-        filter: 1
-      }
-    }
+import { connect } from "react-redux";
 
-  addList(e){
-    let list = this.state.list
-    let todo = this.state.todo
-    this.setState({
-      todo: todo.concat([{
-              val: "Apa Tugasmu Hari Ini? (click here)",
-              selected: false,
-            }]),
-      list: list + 1
-    })
-  }
-
-  listSelesai(e){
-    let newTodo = this.state.todo
-    if (!newTodo[e - 1].selected) {
-      newTodo[e - 1].selected = true
-      this.setState({
-        todo: newTodo
-      })
-    }
-  }
-
-  editList(e){
-    let newTodo = this.state.todo
-    var result = prompt("Apa Tugasmu Hari Ini?", newTodo[e - 1].val);
-    if (result) {
-      newTodo[e-1].val =  result
-    }
-    this.setState({
-      todo: newTodo
-    })
-  }
-
-  hapusList(e){
-    alert('Tugas ' + e + ' Berhasil di Hapus!')
-    var array = this.state.todo;
-    array.splice(e-1, 1);
-    this.setState({todo: array});
-  }
-  handleSelected(e){
-    var data = ""
-    if (e) {
-      data = "del"
-    }
-    return data
-  }
-
-  handleTodo(e, val, index){
-    var data = (
-      <div onClick={() => this.editList(index + 1)}>
-        {val}
-      </div>
-    )
-    if (e) {
-        data = val
-    }
-    return data
-  }
-
-  handleButton(e, index){
-    var data = (
-      <div>
-      <button type="button" class="btn btn-edit" name="button"
-      onClick={() => this.editList(index + 1)}
-      >Edit</button>
-      <button type="button" class="btn btn-hapus" name="button"
-      onClick={() => this.hapusList(index + 1)}>Hapus</button>
-      </div>
-    )
-    if (e) {
-      data = (
-        <div>
-        <button type="button" class="btn btn-hapus" name="button"
-        onClick={() => this.hapusList(index + 1)}>Hapus</button>
-        </div>
-      )
-    }
-    return data
-  }
-
-  handleRow(row, index){
-    let data = (
-      <tr className="row"
-      key={index}
-      >
-      <td>{index + 1}.
-      <input
-      checked={row.selected}
-      type="checkbox"
-      onClick={() => this.listSelesai(index + 1)}
-      />
-      </td>
-      <td className={this.handleSelected(row.selected)}>
-      {this.handleTodo(row.selected, row.val, index)}
-      </td>
-      <td>
-      {this.handleButton(row.selected, index)}
-      </td>
-      </tr>
-    )
-    return data
-  }
-
-  renderList(){
-    let todoList = this.state.todo
-    let data = todoList.map(
-      (row, index) => {
-        if (this.state.filter === 1) {
-          return this.handleRow(row, index)
-        }else if (this.state.filter === 2 && row.selected) {
-          return this.handleRow(row, index)
-        }else if (this.state.filter === 3 && !row.selected) {
-          return this.handleRow(row, index)
-        }
-      }
-      )
-      if (data == "") {
-        data = (
-        <tr>
-          <td colspan="3">
-           Tidak Ada
-          </td>
-        </tr>
-      )
-      }
-    return data
-  }
-
-  changeFilter(e){
-    this.setState({
-      filter: e
-    })
-  }
-
-  render(){
-  return (
-    <div>
-    <div className="main">
-      <div>
-
-        <div className="container teal">
-          <div className="d-flex justify-content-between">
-            <div className="">
-              <h1>Aplikasi Todolistku</h1>
-            </div>
-            <div>
-            <TambahList list={(e) => this.addList(e)}/>
-            </div>
-          </div>
-        </div>
-
-        <div className="d-flex justify-content-center loading">
-          <img src={Load} alt="load"/>
-        </div>
-
-        <div className="container">
-          <div className="rounded-lg shadow card">
-            <div className="d-flex justify-content-center">
-              <h2 className="marginan">Hari Jumat, </h2>
-              <p className="marginan2">30 Agustus 2019</p>
-            </div>
-            <div className="d-flex justify-content-between">
-              <div>
-                <div className="marginan">
-                   Filter: <a onClick={() => (this.changeFilter(1))}>Semua</a> / <a onClick={() => (this.changeFilter(2))}>Selesai</a> / <a onClick={() => (this.changeFilter(3))}>Belum Selesai</a>
+const renderList = ({todo,editList,deleteList,listDone}) => (
+  <tbody>
+    {todo.map((row, index) =>
+      {
+          return (
+            <tr className="row"
+            key={index}
+            >
+              <td>{index + 1}.
+              <input type="checkbox"
+              checked={row.selected}
+              onChange={() => listDone(index)}
+              />
+              </td>
+              <td className={!row.selected ? "" : "del"}>
+              {!row.selected ? (
+                <div onClick={() => editList(index)}>
+                  {row.val}
                 </div>
-              </div>
-            </div>
+              ): row.val}
+              </td>
+              <td>
+              {!row.selected ? (
+                <button type="button" className="btn btn-edit"
+                onClick={() => editList(index)}
+                >Edit</button>
+              ): ""}
+              <button type="button" className="btn btn-hapus"
+              onClick={() =>  deleteList(index)}>Hapus</button>
+              </td>
+            </tr>
+          )
+        }
+      )
+    }
+    </tbody>
+)
 
-            <table>
-              <tr>
-                <th>No</th>
-                <th>Todo</th>
-                <th>Action</th>
-              </tr>
-              {this.renderList()}
-            </table>
-            </div>
-          </div>
-        </div>
+const getVisibleTodos = (todos, filter) => {
+    switch (filter) {
+        case 1:
+            return todos
+        case 2:
+            return todos.filter(e => e.selected)
+        case 3:
+            return todos.filter(e => !e.selected)
+        default:
+            throw new Error('Unknown filter: ' + filter)
+    }
+}
+
+const mapStateToProps = state => ({
+    todo: getVisibleTodos(state.todo,state.filter)
+})
+
+const map = dispatch => ({
+  editList: index => dispatch({ type: "EDIT_LIST_ASYNC", value: index }),
+  deleteList: index => dispatch({ type: "DELETE_LIST_ASYNC", value: index }),
+  listDone: index => dispatch({ type: "LIST_DONE_ASYNC", value: index }),
+})
+
+const RenderList = connect(
+  mapStateToProps,
+  map
+)(renderList);
+
+const header = ({dispatch}) => (
+  <div className="container teal">
+    <div className="d-flex justify-content-between">
+      <div className="">
+        <h1>Aplikasi Todolistku</h1>
+      </div>
+      <div>
+          <button type="submit" className="btn btn-edit edit" onClick={() => dispatch({ type: "ADD_LIST_ASYNC", value: false })}>Submit</button>
       </div>
     </div>
-  );
-}
-}
+  </div>
+)
 
-export default App;
+const Header = connect()(header);
+
+const loads = (state) => (
+<div className="d-flex justify-content-center loading">
+  {
+    state.loading ? (<img src={Load} alt="load"/>): ""
+  }
+</div>
+)
+const dataLoader = state => ({
+    loading: state.loading
+})
+
+const ALoad = connect(dataLoader)(loads);
+
+const filters = ({dispatch}) => (
+  <div className="d-flex justify-content-between">
+      <div className="marginan">
+        Filter:
+        <b onClick={() => dispatch({ type: "CHANGE_FILTER_ASYNC", value: 1 })}>Semua</b> /
+        <b onClick={() => dispatch({ type: "CHANGE_FILTER_ASYNC", value: 2 })}>Selesai</b> /
+        <b onClick={() => dispatch({ type: "CHANGE_FILTER_ASYNC", value: 3 })}>Belum Selesai</b>
+      </div>
+  </div>
+)
+
+const Filteran = connect()(filters);
+
+
+const App = () => (
+  <div className="main">
+
+    <Header />
+
+      <div className="container">
+        <div className="rounded-lg shadow card">
+
+          <div className="d-flex justify-content-center">
+            <h2 className="marginan">Hari Jumat, </h2>
+            <p className="marginan2">30 Agustus 2019</p>
+          </div>
+
+          <Filteran />
+
+          <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Todo</th>
+              <th>Action</th>
+            </tr>
+            </thead>
+            <RenderList />
+          </table>
+          <ALoad />
+
+        </div>
+      </div>
+
+  </div>
+)
+
+export default App
